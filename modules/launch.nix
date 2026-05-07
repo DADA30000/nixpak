@@ -56,7 +56,7 @@ let
     # This is the equivalent of --unshare-all, see bwrap(1) for details.
     "--unshare-user-try"
     (optionals (!config.bubblewrap.shareIpc) "--unshare-ipc")
-    "--unshare-pid"
+    (optionals (!config.bubblewrap.sharePid) "--unshare-pid")
     "--unshare-net"      
     "--unshare-uts"
     "--unshare-cgroup-try"
