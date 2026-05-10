@@ -52,7 +52,7 @@ let
   
   pastaEnable = config.bubblewrap.network && config.pasta.enable;
 
-  bwrapArgs = flatten [
+  bwrapArgs = flatten ([
     # This is the equivalent of --unshare-all, see bwrap(1) for details.
     "--unshare-user-try"
     (optionals (!config.bubblewrap.shareIpc) "--unshare-ipc")
@@ -83,7 +83,7 @@ let
     ])
 
     (optionals config.bubblewrap.bindEntireStore (bindRo "/nix/store"))
-  ];
+  ] ++ config.bubblewrap.extraArgs);
   dbusProxyArgs = [ (env "DBUS_SESSION_BUS_ADDRESS") dbusOutsidePath ] ++ config.dbus.args ++ [ "--filter" ];
 
   originalBwrapArgs = pkgs.writeText "bwrap-args.json" (builtins.toJSON bwrapArgs);
