@@ -83,6 +83,12 @@ func run() error {
 		dbus.WaitUntilStartup()
 	}
 
+	if conf.UseSystemDbusProxy {
+		systemDbus := StartSystemDbusproxy(conf)
+		defer systemDbus.Close()
+		systemDbus.WaitUntilStartup()
+	}
+
 	if conf.UseWaylandProxy {
 		waylandProxy := StartWaylandProxy(conf)
 		defer waylandProxy.Close()

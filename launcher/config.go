@@ -13,6 +13,9 @@ type Config struct {
 	UseDbusProxy            bool
 	DbusproxyExe            string
 	DbusproxyArgs           []string
+	UseSystemDbusProxy      bool
+	SystemDbusproxyExe      string
+	SystemDbusproxyArgs     []string
 	UsePasta                bool
 	PastaExe                string
 	PastaArgs               []string
@@ -44,6 +47,13 @@ func readConfig() (conf Config) {
 	if useDbusProxy {
 		conf.DbusproxyArgs = readJsonArgs(dbusproxyArgsJson)
 		conf.DbusproxyExe = envOr("XDG_DBUS_PROXY_EXE", "xdg-dbus-proxy")
+	}
+
+	systemdbusproxyArgsJson, useSystemDbusProxy := os.LookupEnv("XDG_SYSTEM_DBUS_PROXY_ARGS")
+	conf.UseSystemDbusProxy = useSystemDbusProxy
+	if useSystemDbusProxy {
+		conf.SystemDbusproxyArgs = readJsonArgs(systemdbusproxyArgsJson)
+		conf.SystemDbusproxyExe = envOr("XDG_SYSTEM_DBUS_PROXY_EXE", "xdg-dbus-proxy")
 	}
 
 	pastaArgsJson, usePasta := os.LookupEnv("PASTA_ARGS")
