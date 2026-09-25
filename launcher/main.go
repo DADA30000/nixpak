@@ -110,16 +110,7 @@ func run() error {
 	}
 
 	bwrap.NotifySandboxFinished()
-	if err := bwrap.WaitUntilParentExit(); err != nil {
-		if exiterr, ok := err.(*exec.ExitError); ok {
-			return exiterr
-		} else {
-			panic(err)
-		}
-	}
-
-	bwrap.WaitUntilChildExit()
-
+	os.Exit(0)
 	return nil
 }
 

@@ -6,58 +6,35 @@ import (
 )
 
 type Dbus struct {
-	Cmd      *exec.Cmd
-	SyncRead *os.File
+	Cmd        *exec.Cmd
+	SocketPath string
 }
 
 func StartDbusproxy(proxyExe string, proxyArgs []string) (dbus Dbus) {
-	failed := true
-
-	dbusproxyArgs := append([]string{"--fd=3"}, proxyArgs...)
-
-	cmd := exec.Command(proxyExe, dbusproxyArgs...)
+	cmd := exec.Command(proxyExe, proxyArgs...)
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
 
-	dbusSyncRead, dbusSyncWrite, err := os.Pipe()
-	if err != nil {
-		panic(err)
-	}
-	defer func() {
-		if failed {
-			dbusSyncRead.Close()
-			dbusSyncWrite.Close()
-		}
-	}()
-	cmd.ExtraFiles = []*os.File{dbusSyncWrite}
-
 	dbus.Cmd = cmd
-	dbus.SyncRead = dbusSyncRead
+	if len(proxyArgs) >= 2 {
+		dbus.SocketPath = proxyArgs[1]
+		os.Remove(dbus.SocketPath)
+	}
 
 	if err := cmd.Start(); err != nil {
 		panic(err)
 	}
-	defer func() {
-		if failed {
-			dbus.Close()
-		}
-	}()
 
-	if err := dbusSyncWrite.Close(); err != nil {
-		panic(err)
-	}
-
-	failed = false
 	return
 }
 
 func (dbus *Dbus) WaitUntilStartup() {
-	if _, err := dbus.SyncRead.Read([]byte{'x'}); err != nil {
-		panic(err)
+	if dbus.SocketPath != "" {
+		waitUntilFileAppears(dbus.SocketPath)
 	}
 }
 
 func (dbus *Dbus) Close() {
-	dbus.SyncRead.Close()
-	dbus.Cmd.Wait()
+	// In detached mode, dbus-proxy lifecycle is managed by the systemd cgroup
 }
+
