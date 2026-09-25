@@ -42,7 +42,7 @@ in
 
     extraArgs = mkOption {
       description = "Extra args for bwrap.";
-      type = types.listOf types.str;
+      type = types.listOf sloth.type;
       default = [ ];
     };
 
