@@ -51,14 +51,10 @@ in
 {
   options = {
     system-dbus = sharedPoliciesOptions // {
-      enable = mkEnableOption "System D-Bus access" // {
-        default = true;
-      };
+      enable = mkEnableOption "System D-Bus access";
     };
     dbus = sharedPoliciesOptions // {
-      enable = mkEnableOption "D-Bus access" // {
-        default = true;
-      };
+      enable = mkEnableOption "D-Bus access";
     };
   };
   config = {
