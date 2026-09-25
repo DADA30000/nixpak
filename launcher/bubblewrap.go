@@ -6,6 +6,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"strconv"
 	"syscall"
 
 	"golang.org/x/sys/unix"
@@ -23,10 +24,13 @@ type Bwrap struct {
 	Info       BwrapInfo
 }
 
-func StartBwrap(conf Config, flatpakMetadata FlatpakMetadata) (bwrap Bwrap) {
+func StartBwrap(conf Config, flatpakMetadata FlatpakMetadata, syncFds ...*os.File) (bwrap Bwrap) {
 	failed := true
 
 	bwrapArgs := append([]string{"--info-fd", "3", "--block-fd", "4"}, conf.BwrapArgs...)
+	for i := range syncFds {
+		bwrapArgs = append(bwrapArgs, "--sync-fd", strconv.Itoa(5+i))
+	}
 	if conf.UseFlatpakMetadata {
 		bwrapArgs = append(bwrapArgs, []string{"--ro-bind", flatpakMetadata.MetadataDirectory + "/info", "/.flatpak-info"}...)
 	}
@@ -65,7 +69,7 @@ func StartBwrap(conf Config, flatpakMetadata FlatpakMetadata) (bwrap Bwrap) {
 			bwrapBlockWrite.Close()
 		}
 	}()
-	cmd.ExtraFiles = []*os.File{bwrapInfoWrite, bwrapBlockRead}
+	cmd.ExtraFiles = append([]*os.File{bwrapInfoWrite, bwrapBlockRead}, syncFds...)
 
 	bwrap.Cmd = cmd
 	bwrap.InfoRead = bwrapInfoRead

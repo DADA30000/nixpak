@@ -63,10 +63,6 @@ func waitUntilFileAppears(filename string) {
 }
 
 func run() error {
-	reaper := StartChildReaper()
-	defer reaper.Close()
-	defer reaper.WaitAndReapAllChildren()
-
 	var flatpakMetadata FlatpakMetadata
 
 	conf := readConfig()
@@ -77,32 +73,30 @@ func run() error {
 		flatpakMetadata.Setup()
 	}
 
+	var syncFds []*os.File
+
 	if conf.UseDbusProxy {
 		dbus := StartDbusproxy(conf.DbusproxyExe, conf.DbusproxyArgs)
-		defer dbus.Close()
 		dbus.WaitUntilStartup()
+		syncFds = append(syncFds, dbus.SyncRead)
 	}
 
 	if conf.UseSystemDbusProxy {
 		systemDbus := StartDbusproxy(conf.DbusproxyExe, conf.SystemDbusproxyArgs)
-		defer systemDbus.Close()
 		systemDbus.WaitUntilStartup()
+		syncFds = append(syncFds, systemDbus.SyncRead)
 	}
 
 	if conf.UseWaylandProxy {
 		waylandProxy := StartWaylandProxy(conf)
-		defer waylandProxy.Close()
 		waylandProxy.WaitUntilStartup()
 	}
 
-	bwrap := StartBwrap(conf, flatpakMetadata)
-	defer bwrap.Close()
+	bwrap := StartBwrap(conf, flatpakMetadata, syncFds...)
 	bwrapInfo := bwrap.WaitUntilSandboxReady()
-	defer bwrap.CloseChild()
 
 	if conf.UseFlatpakMetadata {
 		flatpakMetadata.WriteBwrapInfo(bwrapInfo.Raw)
-		defer flatpakMetadata.Cleanup()
 	}
 
 	if conf.UsePasta {
@@ -110,15 +104,7 @@ func run() error {
 	}
 
 	bwrap.NotifySandboxFinished()
-	if err := bwrap.WaitUntilParentExit(); err != nil {
-		if exiterr, ok := err.(*exec.ExitError); ok {
-			return exiterr
-		} else {
-			panic(err)
-		}
-	}
-
-	bwrap.WaitUntilChildExit()
+	os.Exit(0)
 
 	return nil
 }
