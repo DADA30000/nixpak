@@ -110,9 +110,6 @@ func run() error {
 	}
 
 	bwrap.NotifySandboxFinished()
-	if conf.UseFlatpakMetadata {
-		flatpakMetadata.Cleanup()
-	}
 	os.Exit(0)
 	return nil
 }
